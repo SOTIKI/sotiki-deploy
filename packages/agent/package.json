@@ -5,8 +5,8 @@
   "type": "module",
   "bin": { "sotiki-deploy": "./dist/cli/index.js" },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
