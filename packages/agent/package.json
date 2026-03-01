@@ -6,7 +6,7 @@
   "bin": { "sotiki-deploy": "./dist/cli/index.js" },
   "scripts": {
     "build": "tsc",
-    "postbuild": "node scripts/add-shebang.mjs",
+    "postbuild": "node --input-type=module -e \"import {readFileSync,writeFileSync} from 'fs';const f='dist/cli/index.js';const c=readFileSync(f,'utf8');if(!c.startsWith('#!'))writeFileSync(f,'#!/usr/bin/env node\\n'+c);\"",
     "dev": "tsc --watch"
   },
   "dependencies": {
