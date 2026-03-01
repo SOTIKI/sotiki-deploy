@@ -107,8 +107,8 @@ export async function streamLogs(
   })
   docker.modem.demuxStream(
     stream as unknown as NodeJS.ReadableStream,
-    { write: (b: Buffer) => { onData(b.toString('utf8')); return true } },
-    { write: (b: Buffer) => { onData(b.toString('utf8')); return true } }
+    { write: (b: string | Uint8Array) => { onData(Buffer.from(b).toString('utf8')); return true } },
+    { write: (b: string | Uint8Array) => { onData(Buffer.from(b).toString('utf8')); return true } }
   )
   return () => { try { (stream as unknown as { destroy: () => void }).destroy() } catch {} }
 }
