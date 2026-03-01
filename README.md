@@ -1,49 +1,166 @@
 # SOTIKI Deploy
 
-> One command to join the network
+> One command to join the SOTIKI network
 
-## Quick Start
+---
 
-```bash
-curl -fsSL https://sotiki.sh/install | bash
-sotiki-deploy init
-sotiki-deploy start
-sotiki-deploy ui
-```
+## Быстрый старт на чистом сервере (Ubuntu/Debian)
 
-## Commands
-
-```
-sotiki-deploy init               Setup wizard
-sotiki-deploy start              Start all services
-sotiki-deploy stop               Stop all services
-sotiki-deploy restart            Restart all services
-sotiki-deploy status             Show service status + metrics
-sotiki-deploy logs [-f]          Stream logs
-sotiki-deploy ui                 Start Web UI on 127.0.0.1:8080
-```
-
-## Build from source
+### 1. Системные зависимости
 
 ```bash
-git clone https://github.com/sotiki/sotiki-deploy
+apt-get update && apt-get install -y curl git
+```
+
+### 2. Node.js 20+
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs
+node --version
+```
+
+### 3. Docker
+
+```bash
+curl -fsSL https://get.docker.com | sh
+systemctl enable docker --now
+docker --version
+```
+
+### 4. Клонируем и собираем
+
+```bash
+git clone https://github.com/sotiki/sotiki-deploy.git
 cd sotiki-deploy
 npm install
 npm run build
+node packages/agent/scripts/add-shebang.mjs
 sudo npm install -g ./packages/agent
+sotiki-deploy --version
 ```
 
-## Web UI access (SSH tunnel)
+### 5. Инициализация и запуск
 
 ```bash
-ssh -L 8080:localhost:8080 user@your-server
-# open http://localhost:8080
+docker network create sotiki-net
+sotiki-deploy init
+sotiki-deploy start
+sotiki-deploy status
 ```
 
-## Config location
+### 6. Веб-интерфейс
 
-- Root:  `/etc/sotiki-deploy/config.db`
-- User:  `~/.config/sotiki-deploy/config.db`
+```bash
+sotiki-deploy ui
+```
+
+UI слушает только `127.0.0.1:8080`. Открыть с локальной машины через SSH туннель:
+
+```bash
+# На своём ПК (не на сервере)
+ssh -L 8080:localhost:8080 root@ip-сервера
+
+# Затем в браузере
+http://localhost:8080
+```
+
+---
+
+## Проверка nginx
+
+```bash
+# Контейнеры запущены?
+docker ps
+
+# nginx отвечает локально?
+curl -I http://localhost
+
+# nginx отвечает снаружи?
+curl -I http://ip-сервера
+
+# Логи nginx
+sotiki-deploy logs -s nginx -f
+
+# Порты контейнера
+docker inspect sotiki-nginx | grep -A10 Ports
+```
+
+Если настроен SSL:
+
+```bash
+curl -I https://домен
+```
+
+---
+
+## Команды
+
+```
+sotiki-deploy init                    Мастер настройки
+sotiki-deploy start [-s service]      Запустить сервисы
+sotiki-deploy stop  [-s service]      Остановить сервисы
+sotiki-deploy restart                 Перезапустить сервисы
+sotiki-deploy status                  Статус + метрики
+sotiki-deploy logs -f [-s service]    Логи в реальном времени
+sotiki-deploy ui [--port 8080]        Запустить веб-интерфейс
+```
+
+---
+
+## Обновление
+
+```bash
+cd sotiki-deploy
+git pull
+npm install
+npm run build
+node packages/agent/scripts/add-shebang.mjs
+sudo npm install -g ./packages/agent
+sotiki-deploy restart
+```
+
+---
+
+## Конфигурация
+
+| Путь | Описание |
+|------|----------|
+| `/etc/sotiki-deploy/config.db` | SQLite база (root) |
+| `~/.config/sotiki-deploy/config.db` | SQLite база (user) |
+| `/etc/sotiki-deploy/docker-compose.yml` | Docker Compose |
+| `/etc/sotiki-deploy/nginx.conf` | Конфиг nginx |
+
+---
+
+## Устранение проблем
+
+**sotiki-net not found**
+```bash
+docker network create sotiki-net
+```
+
+**Port already allocated / container name conflict**
+```bash
+docker rm -f sotiki-storage sotiki-postgresql sotiki-nginx 2>/dev/null; true
+sotiki-deploy start
+```
+
+**Docker Hub rate limit**
+```bash
+docker login
+```
+
+**Полный сброс и переинициализация**
+```bash
+docker rm -f sotiki-storage sotiki-postgresql sotiki-nginx 2>/dev/null; true
+docker network rm sotiki-net 2>/dev/null; true
+docker network create sotiki-net
+sotiki-deploy init --force
+sotiki-deploy start
+```
+
+---
 
 ## Roadmap
 

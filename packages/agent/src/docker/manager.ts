@@ -64,14 +64,29 @@ export async function startService(svc: ServiceName): Promise<void> {
     const cfg = getConfig()
     const img = image(svc)
     await pullIfNeeded(img)
+
+    const portBindings: Record<string, { HostPort: string }[]> = {}
+    const exposedPorts: Record<string, Record<never, never>> = {}
+
+    if (svc === 'storage' || svc === 'rating' || svc === 'news') {
+      exposedPorts['3000/tcp'] = {}
+      portBindings['3000/tcp'] = [{ HostPort: String(cfg.port ?? 3000) }]
+    } else if (svc === 'nginx') {
+      exposedPorts['80/tcp']  = {}
+      exposedPorts['443/tcp'] = {}
+      portBindings['80/tcp']  = [{ HostPort: '80' }]
+      portBindings['443/tcp'] = [{ HostPort: '443' }]
+    }
+
     await docker.createContainer({
       name,
       Image: img,
       Env: buildEnv(svc, cfg),
-      ExposedPorts: { '3000/tcp': {} },
+      ExposedPorts: exposedPorts,
       HostConfig: {
         RestartPolicy: { Name: 'unless-stopped' },
-        PortBindings: { '3000/tcp': [{ HostPort: String(cfg.port ?? 3000) }] },
+        PortBindings: portBindings,
+        NetworkMode: svc === 'postgresql' ? 'sotiki-net' : undefined,
       },
     })
     await docker.getContainer(name).start()

@@ -5,8 +5,9 @@
   "type": "module",
   "bin": { "sotiki-deploy": "./dist/cli/index.js" },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch"
+    "build": "tsc",
+    "postbuild": "node scripts/add-shebang.mjs",
+    "dev": "tsc --watch"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

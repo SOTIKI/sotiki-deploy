@@ -15,7 +15,7 @@ export const LOGIN_RATE_LIMIT_WINDOW   = 15 * 60 * 1000
 export const METRICS_INTERVAL_MS       = 5_000
 export const METRICS_RETENTION_MS      = 30 * 24 * 60 * 60 * 1000
 
-export const STUB_IMAGE = 'nginx:alpine'
+export const STUB_IMAGE = 'busybox:latest'
 
 export const SERVICE_IMAGES: Record<string, string> = {
   storage: process.env['SOTIKI_STORAGE_IMAGE'] ?? 'sotiki/storage:latest',
