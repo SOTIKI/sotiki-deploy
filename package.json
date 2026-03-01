@@ -1,0 +1,13 @@
+{
+  "name": "sotiki-deploy-monorepo",
+  "private": true,
+  "workspaces": ["packages/agent", "packages/ui"],
+  "scripts": {
+    "build": "npm run build -w packages/agent && npm run build -w packages/ui",
+    "dev:agent": "npm run dev -w packages/agent",
+    "dev:ui": "npm run dev -w packages/ui"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
