@@ -1,4 +1,5 @@
 import Docker from 'dockerode'
+import { PassThrough } from 'stream'
 import { SERVICE_IMAGES, STUB_IMAGE } from '../config/defaults.js'
 import { getConfig, logEvent } from '../config/store.js'
 
@@ -105,11 +106,11 @@ export async function streamLogs(
   const stream = await docker.getContainer(cname(svc)).logs({
     follow: true, stdout: true, stderr: true, tail, timestamps: true,
   })
-  docker.modem.demuxStream(
-    stream as unknown as NodeJS.ReadableStream,
-    { write: (b: string | Uint8Array) => { onData(Buffer.from(b).toString('utf8')); return true } },
-    { write: (b: string | Uint8Array) => { onData(Buffer.from(b).toString('utf8')); return true } }
-  )
+  const stdout = new PassThrough()
+  const stderr = new PassThrough()
+  stdout.on('data', (b: Buffer) => onData(b.toString('utf8')))
+  stderr.on('data', (b: Buffer) => onData(b.toString('utf8')))
+  docker.modem.demuxStream(stream as unknown as NodeJS.ReadableStream, stdout, stderr)
   return () => { try { (stream as unknown as { destroy: () => void }).destroy() } catch {} }
 }
 
