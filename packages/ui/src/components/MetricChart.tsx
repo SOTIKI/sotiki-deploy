@@ -4,15 +4,15 @@ import type { Metric } from '../api/client.js'
 interface Props {
   data: Metric[]
   title: string
-  key: keyof Metric
+  metricKey: keyof Metric
   fmt?: (v: number) => string
   color?: string
 }
 
-export function MetricChart({ data, title, key: k, fmt = v => String(Math.round(v)), color = '#c8ff00' }: Props) {
+export function MetricChart({ data, title, metricKey, fmt = v => String(Math.round(v)), color = '#c8ff00' }: Props) {
   const chart = data.map(m => ({
     t: new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    v: m[k] as number,
+    v: m[metricKey] as number,
   }))
   const latest = chart.at(-1)?.v
 

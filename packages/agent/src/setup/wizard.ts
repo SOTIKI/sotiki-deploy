@@ -9,6 +9,24 @@ import { generateCompose, generateNginxConf } from '../docker/compose.js'
 import { CONFIG_DIR } from '../config/defaults.js'
 import { IS_WINDOWS, checkDocker, configureFirewall, installAutostart } from '../platform/index.js'
 
+interface Answers {
+  serverType: 'storage' | 'rating' | 'news'
+  domain: string
+  port: number
+  uiPort: number
+  password: string
+  sslEnabled: boolean
+  sslEmail: string
+  maxDbSizeGb: number
+  messageRetentionDays: number
+  isPublic: boolean
+  country: string
+  description: string
+  setupFirewall: boolean
+  setupAutostart: boolean
+  useStubImage: boolean
+}
+
 export async function runWizard(): Promise<void> {
   console.log(chalk.hex('#c8ff00').bold('\n  SOTIKI Deploy — Setup Wizard\n'))
 
@@ -25,23 +43,7 @@ export async function runWizard(): Promise<void> {
   dockerCheck.succeed(`Docker ${docker.version}`)
   console.log()
 
-  const answers = await inquirer.prompt<{
-    serverType: 'storage' | 'rating' | 'news'
-    domain: string
-    port: number
-    uiPort: number
-    password: string
-    sslEnabled: boolean
-    sslEmail: string
-    maxDbSizeGb: number
-    messageRetentionDays: number
-    isPublic: boolean
-    country: string
-    description: string
-    setupFirewall: boolean
-    setupAutostart: boolean
-    useStubImage: boolean
-  }>([
+  const answers = await inquirer.prompt<Answers>([
     {
       type: 'list', name: 'serverType', message: 'Server type:',
       choices: [
@@ -50,28 +52,55 @@ export async function runWizard(): Promise<void> {
         { name: 'News     — distributes protocol updates', value: 'news' },
       ],
     },
-    { type: 'input',  name: 'domain',   message: 'Domain or IP:', default: 'localhost',
-      validate: (v: string) => v.trim().length > 0 || 'Cannot be empty' },
-    { type: 'number', name: 'port',     message: 'Server port:', default: 3000 },
-    { type: 'number', name: 'uiPort',   message: 'Web UI port:', default: 8080 },
-    { type: 'password', name: 'password', message: 'Web UI password:', mask: '*',
-      validate: (v: string) => v.length >= 8 || 'Min 8 characters' },
-    { type: 'confirm', name: 'sslEnabled', message: "Configure SSL (Let's Encrypt)?", default: false,
-      when: a => a.domain !== 'localhost' && !IS_WINDOWS },
-    { type: 'input', name: 'sslEmail', message: 'Email for SSL cert:', when: a => !!a.sslEnabled },
-    { type: 'number', name: 'maxDbSizeGb', message: 'Max DB size (GB):', default: 10,
-      when: a => a.serverType === 'storage' },
-    { type: 'number', name: 'messageRetentionDays', message: 'Message retention days (0 = forever):', default: 0,
-      when: a => a.serverType === 'storage' },
-    { type: 'confirm', name: 'isPublic',  message: 'Add to public registry?', default: false },
-    { type: 'input',   name: 'country',   message: 'Country code (e.g. DE):', when: a => a.isPublic },
-    { type: 'input',   name: 'description', message: 'Server description:', when: a => a.isPublic },
-    { type: 'confirm', name: 'setupFirewall', default: true,
-      message: IS_WINDOWS ? 'Configure Windows Firewall?' : 'Configure UFW?' },
-    { type: 'confirm', name: 'setupAutostart', default: true,
-      message: IS_WINDOWS ? 'Install as Windows Service?' : 'Install systemd service?' },
-    { type: 'confirm', name: 'useStubImage', default: true,
-      message: chalk.yellow('Use stub image (nginx:alpine) instead of real sotiki image?') },
+    {
+      type: 'input', name: 'domain', message: 'Domain or IP:', default: 'localhost',
+      validate: (v: string) => v.trim().length > 0 || 'Cannot be empty',
+    },
+    { type: 'number', name: 'port',   message: 'Server port:', default: 3000 },
+    { type: 'number', name: 'uiPort', message: 'Web UI port:', default: 8080 },
+    {
+      type: 'password', name: 'password', message: 'Web UI password:', mask: '*',
+      validate: (v: string) => v.length >= 8 || 'Min 8 characters',
+    },
+    {
+      type: 'confirm', name: 'sslEnabled', default: false,
+      message: "Configure SSL (Let's Encrypt)?",
+      when: (a: Partial<Answers>) => a.domain !== 'localhost' && !IS_WINDOWS,
+    },
+    {
+      type: 'input', name: 'sslEmail', message: 'Email for SSL cert:',
+      when: (a: Partial<Answers>) => !!a.sslEnabled,
+    },
+    {
+      type: 'number', name: 'maxDbSizeGb', message: 'Max DB size (GB):', default: 10,
+      when: (a: Partial<Answers>) => a.serverType === 'storage',
+    },
+    {
+      type: 'number', name: 'messageRetentionDays', default: 0,
+      message: 'Message retention days (0 = forever):',
+      when: (a: Partial<Answers>) => a.serverType === 'storage',
+    },
+    { type: 'confirm', name: 'isPublic', message: 'Add to public registry?', default: false },
+    {
+      type: 'input', name: 'country', message: 'Country code (e.g. DE):',
+      when: (a: Partial<Answers>) => !!a.isPublic,
+    },
+    {
+      type: 'input', name: 'description', message: 'Server description:',
+      when: (a: Partial<Answers>) => !!a.isPublic,
+    },
+    {
+      type: 'confirm', name: 'setupFirewall', default: true,
+      message: IS_WINDOWS ? 'Configure Windows Firewall?' : 'Configure UFW?',
+    },
+    {
+      type: 'confirm', name: 'setupAutostart', default: true,
+      message: IS_WINDOWS ? 'Install as Windows Service?' : 'Install systemd service?',
+    },
+    {
+      type: 'confirm', name: 'useStubImage', default: true,
+      message: chalk.yellow('Use stub image (nginx:alpine) instead of real sotiki image?'),
+    },
   ])
 
   console.log()

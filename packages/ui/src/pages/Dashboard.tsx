@@ -45,10 +45,10 @@ export function Dashboard() {
         <div>
           <div style={sectionLabel}>Metrics — Last Hour</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            <MetricChart data={h} title="CPU"    key="cpu"      fmt={v => `${v.toFixed(1)}%`} />
-            <MetricChart data={h} title="RAM"    key="ramUsed"  fmt={fmtBytes} color="#00aaff" />
-            <MetricChart data={h} title="NET IN" key="netIn"    fmt={fmtBps}   color="#ffaa00" />
-            <MetricChart data={h} title="DISK"   key="diskUsed" fmt={fmtBytes} color="#aa66ff" />
+            <MetricChart data={h} title="CPU"    metricKey="cpu"      fmt={v => `${v.toFixed(1)}%`} />
+            <MetricChart data={h} title="RAM"    metricKey="ramUsed"  fmt={fmtBytes} color="#00aaff" />
+            <MetricChart data={h} title="NET IN" metricKey="netIn"    fmt={fmtBps}   color="#ffaa00" />
+            <MetricChart data={h} title="DISK"   metricKey="diskUsed" fmt={fmtBytes} color="#aa66ff" />
           </div>
         </div>
       )}
